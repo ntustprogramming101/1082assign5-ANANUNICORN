@@ -1,3 +1,5 @@
+
+
 PImage title, gameover, gamewin, startNormal, startHovered, restartNormal, restartHovered;
 PImage groundhogIdle, groundhogLeft, groundhogRight, groundhogDown;
 PImage bg, life, cabbage, soilEmpty, clock, caution, sweethome;
@@ -40,6 +42,7 @@ final int PLAYER_MAX_HEALTH = 5;
 int playerMoveDirection = 0;
 int playerMoveTimer = 0;
 int playerMoveDuration = 15;
+int colors;
 
 boolean demoMode = false;
 
@@ -196,15 +199,13 @@ void initClocks(){
 	// - Remember to reroll if the randomized position has a cabbage on the same soil!
 	clockX = new float[6];
 	clockY = new float[6];
-    
+
 	for(int i = 0; i < clockX.length; i++){
-		
-		clockX[i] = SOIL_SIZE * floor(random(SOIL_COL_COUNT));
-		if(clockX[i] == cabbageX[i]){
+		if(clockX[i] != cabbageX[i] || clockY[i] != cabbageY[i]){
 			clockX[i] = SOIL_SIZE * floor(random(SOIL_COL_COUNT));
+			clockY[i] = SOIL_SIZE * ( i * 4 + floor(random(4)));
 		}
-		clockY[i] = SOIL_SIZE * ( i * 4 + floor(random(4)));
-	
+		
 	}
 }
 
@@ -300,7 +301,7 @@ void draw() {
 
 			// Requirement #3: Use boolean isHit(...) to detect collision
 			if(playerHealth < PLAYER_MAX_HEALTH
-			&& isHit(cabbageX[i],cabbageY[i],SOIL_SIZE,SOIL_SIZE,playerX,playerY,SOIL_SIZE,SOIL_SIZE)) { // r1 bottom edge past r2 top
+			&& isHit(cabbageX[i],cabbageY[i],SOIL_SIZE,SOIL_SIZE,playerX,playerY,SOIL_SIZE,SOIL_SIZE)) { 
 
 				playerHealth ++;
 				cabbageX[i] = cabbageY[i] = -1000;
@@ -325,6 +326,8 @@ void draw() {
 			}
 
 		}
+
+
 		// Groundhog
 
 		PImage groundhogDisplay = groundhogIdle;
@@ -468,7 +471,7 @@ void draw() {
 
 		// Requirement #6:
 		//   Call drawCaution() to draw caution sign
-
+		drawCaution();
 		popMatrix();
 
 		// Depth UI
@@ -555,7 +558,7 @@ void drawTimerUI(){
 	text(timeString, 3, height + 3);
 
 	// Actual Time Text
-	//color timeTextColor = #ffffff; 		// Requirement #5: Get the correct color using color getTimeTextColor(int frames)
+	//color timeTextColor = getTimeTextColor(gameTimer); 		// Requirement #5: Get the correct color using color getTimeTextColor(int frames)
 	fill(getTimeTextColor(gameTimer));
 	text(timeString, 0, height);
 }
@@ -565,6 +568,7 @@ void addTime(float seconds){					// Requirement #2
 }
 
 boolean isHit(float ax, float ay, float aw, float ah, float bx, float by, float bw, float bh){
+								// Requirement #3
 	if(ax + aw > bx && ax < bx + bw && ay + ah > by && ay < by + bh){
 		return true;
 	}else{
@@ -573,9 +577,10 @@ boolean isHit(float ax, float ay, float aw, float ah, float bx, float by, float 
 }
 
 String convertFramesToTimeString(int frames){	// Requirement #4
-	String min = nf(frames / 3600 , 2);
-	String second = nf((frames / 60) % 60 , 2);
-	return  min + ":" + second;
+
+	String min = nf(floor(frames / 3600) , 2);
+	String ssec = nf(floor((frames / 60) % 60) , 2);
+	return  min+":"+ssec;
 }
 
 color getTimeTextColor(int frames){				// Requirement #5
@@ -603,7 +608,12 @@ int getEnemyIndexByRow(int row){				// Requirement #6
 		// - If there's a soldier in that row, return that soldier's index in soldierX/soldierY
 		// (for example, if soldierY[3] is in that row, return 3)
 		// - Return -1 if there's no soldier in that row
-
+  for( int i=0 ; i<6 ; i++ ){
+    //println( soldierY[i] / SOIL_SIZE,row );
+    if( ( soldierY[i] / SOIL_SIZE ) == row ){
+      return i;
+    }
+  }     
 	return -1;
 }
 
@@ -615,6 +625,11 @@ void drawCaution(){								// Requirement #6
 		// - Use playerRow to calculate the row below the screen
 		// - Use the returned value from int getEnemyIndexByRow(int row) to get the soldier's position from soldierX/soldierY arrays
 		// - Don't draw anything if int getEnemyIndexByRow(int row) returns -1
+	int a = getEnemyIndexByRow( playerRow+5 );
+    //println(a);
+    if( a != -1 ){
+      image( caution , soldierX[a] , soldierY[a]-SOIL_SIZE );
+    }
 }
 
 void keyPressed(){
